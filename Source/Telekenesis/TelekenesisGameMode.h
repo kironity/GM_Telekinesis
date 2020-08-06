@@ -12,6 +12,7 @@ class ATelekenesisGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
+
 	ATelekenesisGameMode();
 };
 

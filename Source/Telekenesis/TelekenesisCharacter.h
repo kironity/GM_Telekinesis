@@ -13,6 +13,10 @@ class ATelekenesisCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+public:
+
+	ATelekenesisCharacter();
+
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
 	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
 	class USkeletalMeshComponent* Mesh1P;
@@ -30,24 +34,20 @@ class ATelekenesisCharacter : public ACharacter
 	class UCameraComponent* FirstPersonCameraComponent;
 
 	/** PhysicsHandle дл€ геймплейной фичи телекинез */
-	UPROPERTY(VisibleDefaultsOnly, Category = "Telekenesis")
-	class UPhysicsHandleComponent* Physics;
+	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis")
+	class UPhysicsHandleComponent* PhysicHandle;
 
 	/**  онтроль позиции меша подверженного телекинезу */
-	UPROPERTY(VisibleDefaultsOnly, Category = "Telekenesis")
-	class USceneComponent* TelekenesisTarget;
+	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis")
+	class USceneComponent* TelekenesisPosition;
 
 	/** ћинимальна€ дистанци€ расположени€ меша подверженного телекинезу */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Telekenesis")
-	class USceneComponent* MinimumTelekenesisPosition;
+	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis|Position")
+	class USceneComponent* MinimumTelekinesisPosition;
 
 	/** ћаксимальна€ дистанци€ расположени€ меша подверженного телекинезу */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Telekenesis")
+	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis")
 	class USceneComponent* MaximumTelekenesisPosition;
-
-public:
-
-	ATelekenesisCharacter();
 
 protected:
 
@@ -58,10 +58,6 @@ public:
 	/** Gun muzzle's offset from the characters location */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	FVector GunOffset;
-
-	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category=Projectile)
-	TSubclassOf<class ATelekenesisProjectile> ProjectileClass;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
@@ -75,26 +71,55 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	uint32 bUsingMotionControllers : 1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
+	class USoundBase* HoldTelekinesisSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
+	class USoundBase* ThrowTelekinesisSound;
+
+    // Set maximum value for telekenesis strength
+	UPROPERTY(EditAnywhere, Category = "Telekinesis", meta = (ClampMin = 0.f))
+	float MaxLengthTelekinesis;
+
 protected:
 	
-	/** Fires a projectile. */
-	void OnFire();
+	/** Telekinesis start */
+	void TelekinesisUp();
 
+	void TelekinesisRelease();
+
+	/** @param - Filled incoming HitResult 
+	    @return - Is Valid Blocking Hit return true  */
+	bool LineTrace(FHitResult& OutHit);
+
+	/** Spawn Sound at Selected PrimitiveComponent and Attach him 
+	    @param RequiredSpawnComponent - A primitive that will hold the sound.
+		@param SpawnedSound - the sound that will be played. 
+		@param PauseOnSpawn - Default Value for Spawned sound. true = Play On Spawn, false = Don't play.
+		@return - Component that was Spawned. */ 
+	UAudioComponent* CreateAttachedSound(UPrimitiveComponent* RequiredSpawnComponent, USoundBase* SpawnedSound, bool PauseOnSpawn);
+
+	void OnOffAttachedSound(UAudioComponent* ComponenToChange, bool Condition);
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
 
 	/** Handles stafing movement, left and right */
 	void MoveRight(float Val);
 
-
-protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
+protected:
+
+	class UAudioComponent* TelekinesisUpSoundComponent;
+	bool bObjectGrabbed;
+
 public:
+
 	/** Returns Mesh1P subobject **/
 	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
