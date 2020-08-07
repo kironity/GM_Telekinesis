@@ -1,7 +1,7 @@
-# GM_Telekinesis
 GamePlay mechanics Telekinesis
 
 Версия движка Unreal engine 4.25.
+
 # О проекте
 Возможность поднимать и выбрасывать Primitive Components на расстоянии.
 Добавленные ассеты StarterContent. 
