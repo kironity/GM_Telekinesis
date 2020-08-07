@@ -61,15 +61,21 @@ ATelekenesisCharacter::ATelekenesisCharacter()
 	// Create a Physics Handle
 	PhysicHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("Physics"));
 
-	TelekenesisPosition = CreateDefaultSubobject<USceneComponent>(TEXT("CurrentPosition"));
-	TelekenesisPosition->SetupAttachment(FirstPersonCameraComponent);
+	CurrentTelekinesisPower = CreateDefaultSubobject<USceneComponent>(TEXT("CurrentPosition"));
+	CurrentTelekinesisPower->SetupAttachment(FirstPersonCameraComponent);
 
-	MinimumTelekinesisPosition = CreateDefaultSubobject<USceneComponent>(TEXT("MinimumPosition"));
-	MinimumTelekinesisPosition->SetupAttachment(FirstPersonCameraComponent);
+	MinimumTelekinesisPower = CreateDefaultSubobject<USceneComponent>(TEXT("MinimumPosition"));
+	MinimumTelekinesisPower->SetupAttachment(FirstPersonCameraComponent);
 
-	MaximumTelekenesisPosition = CreateDefaultSubobject<USceneComponent>(TEXT("MaximumPosition"));
-	MaximumTelekenesisPosition->SetupAttachment(FirstPersonCameraComponent);
+	MaximumTelekinesisPower = CreateDefaultSubobject<USceneComponent>(TEXT("MaximumPosition"));
+	MaximumTelekinesisPower->SetupAttachment(FirstPersonCameraComponent);
 
+	// Set Default Volume value 
+	HoldTelekinesisVolume = 1.f;
+	ThrowSoundVolume = 1.f;
+
+	// Set a default value that affects component interpolation
+	StepDistanceValue = 150.f;
 }
 
 void ATelekenesisCharacter::BeginPlay()
@@ -81,7 +87,7 @@ void ATelekenesisCharacter::BeginPlay()
 	FP_Gun->AttachToComponent(Mesh1P, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GripPoint"));
 
 	// Set Max Distance to Physics Grabbed ability 
-	MaximumTelekenesisPosition->SetRelativeLocation(FVector(MaxLengthTelekinesis, 0.f, 0.f));
+	MaximumTelekinesisPower->SetRelativeLocation(FVector(MaxLengthTelekinesis, 0.f, 0.f));
 
 	if (bPlayHoldSoundOnGrabbedComponent)
 	{
@@ -97,11 +103,11 @@ void ATelekenesisCharacter::Tick(float DeltaSeconds)
 {
 	if (bObjectGrabbed && PhysicHandle != nullptr)
 	{
-		if (CheckHoldComponents(PhysicHandle->GetGrabbedComponent(), TelekenesisPosition, MinimumFailedDistance))
+		if (CheckHoldComponents(PhysicHandle->GetGrabbedComponent(), CurrentTelekinesisPower, MinimumFailedDistance))
 		{
 			// Update Telekinesis mesh position
-			PhysicHandle->SetTargetLocationAndRotation(TelekenesisPosition->GetComponentLocation(), 
-				                                       TelekenesisPosition->GetComponentRotation());
+			PhysicHandle->SetTargetLocationAndRotation(CurrentTelekinesisPower->GetComponentLocation(), 
+				                                       CurrentTelekinesisPower->GetComponentRotation());
 		}
 		else
 		{
@@ -131,7 +137,11 @@ void ATelekenesisCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 
 	// Bind Telekinesis event Right Mouse Button 
 	PlayerInputComponent->BindAction("Throw", IE_Pressed, this, &ATelekenesisCharacter::ThrowObject);
-
+	
+	// Bind WheelMouse events 
+	PlayerInputComponent->BindAction("SlideForward", IE_Pressed, this, &ATelekenesisCharacter::WheelUp);
+	PlayerInputComponent->BindAction("SlideBackward", IE_Pressed, this, &ATelekenesisCharacter::WheelDown);
+	
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATelekenesisCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ATelekenesisCharacter::MoveRight);
@@ -158,10 +168,10 @@ void ATelekenesisCharacter::TelekinesisUp()
 					           UKismetMathLibrary::MakeRotFromX(HitResult.Location));
 
 				//Update Location 
-				TelekenesisPosition->SetWorldLocation(HitResult.Location);
+				CurrentTelekinesisPower->SetWorldLocation(HitResult.Location);
 				
-				FVector TargetLocation = TelekenesisPosition->GetComponentLocation();
-				FRotator TargetRotation = TelekenesisPosition->GetComponentRotation();
+				FVector TargetLocation = CurrentTelekinesisPower->GetComponentLocation();
+				FRotator TargetRotation = CurrentTelekinesisPower->GetComponentRotation();
 
 				// Set Grabbed Component desired location and rotation 
 				PhysicHandle->SetTargetLocationAndRotation(TargetLocation, TargetRotation);
@@ -214,15 +224,36 @@ void ATelekenesisCharacter::ThrowObject()
 	if (PhysicHandle->GetGrabbedComponent() != nullptr)
 	{
 		FVector Impulse = FVector(FirstPersonCameraComponent->GetForwardVector() * ImpulseStrength);
-
-		PhysicHandle->GetGrabbedComponent()->AddImpulse(Impulse, FName("None"), true);
-		PhysicHandle->ReleaseComponent();
-
+		UPrimitiveComponent* GrabbedComponent = PhysicHandle->GetGrabbedComponent();
+		GrabbedComponent->AddImpulse(Impulse, FName("None"), true);
+		
 		OnOffAttachedSound(TelekinesisUpSoundComponent, false);
 
 		// try and play the sound if specified
-		UGameplayStatics::PlaySound2D(this, ThrowTelekinesisSound);
+		UGameplayStatics::PlaySound2D(this, ThrowTelekinesisSound, ThrowSoundVolume);
+
+		// try and spawn Emitters  actor
+		FVector SpawnedLocation = GrabbedComponent->GetComponentLocation();
+		FRotator SpawnedRotation = GrabbedComponent->GetComponentRotation();
+		FActorSpawnParameters SpawnParameters;
+		GetWorld()->SpawnActor<AActor>(ThrowEffect, SpawnedLocation, SpawnedRotation, SpawnParameters);
+
+		PhysicHandle->ReleaseComponent();
 	}
+}
+
+void ATelekenesisCharacter::WheelUp()
+{
+	FVector CurrentPosition = CurrentTelekinesisPower->GetComponentLocation();
+	FVector DesiredPosition = MaximumTelekinesisPower->GetComponentLocation();
+	InterpTo(CurrentPosition, DesiredPosition, CurrentTelekinesisPower, StepDistanceValue);
+}
+
+void ATelekenesisCharacter::WheelDown()
+{
+	FVector CurrentPosition = CurrentTelekinesisPower->GetComponentLocation();
+	FVector DesiredPosition = MinimumTelekinesisPower->GetComponentLocation();
+	InterpTo(CurrentPosition, DesiredPosition, CurrentTelekinesisPower, StepDistanceValue);
 }
 
 bool ATelekenesisCharacter::LineTrace(FHitResult& OutHit)
@@ -236,7 +267,7 @@ bool ATelekenesisCharacter::LineTrace(FHitResult& OutHit)
 		FVector TraceStart = CameraManager->GetCameraLocation();
 
 		// Culc Desired Trace length 
-		float TraceLength = FVector(MaximumTelekenesisPosition->GetComponentLocation() - TraceStart).Size();
+		float TraceLength = FVector(MaximumTelekinesisPower->GetComponentLocation() - TraceStart).Size();
 
 		// Get location End trace
 		FVector TraceEnd = CameraManager->GetActorForwardVector() * TraceLength + TraceStart;
@@ -254,7 +285,9 @@ UAudioComponent* ATelekenesisCharacter::CreateAttachedSound(UPrimitiveComponent*
 	// Try Spawn the Telekinesis sound if specified
 	if (SpawnedSound != nullptr)
 	{
-		UAudioComponent* SpawnSound = UGameplayStatics::SpawnSoundAttached(SpawnedSound, RequiredSpawnComponent);
+		EAttachLocation::Type AttachType = EAttachLocation::KeepRelativeOffset;
+		UAudioComponent* SpawnSound = UGameplayStatics::SpawnSoundAttached(SpawnedSound, RequiredSpawnComponent, FName("None"), FVector(0.f),
+			                                                               AttachType, true, HoldTelekinesisVolume, 1.f, 0.f);
 
 		// Set Default Sound value on the basis "DefaultCondition"
 		SpawnSound->SetPaused(!PauseOnSpawn);
@@ -293,6 +326,17 @@ bool ATelekenesisCharacter::CheckHoldComponents(UPrimitiveComponent* GrabbedComp
 		}
 	}
 	return false;
+}
+
+void ATelekenesisCharacter::InterpTo(FVector CurrentLocation, FVector DesiredLocation, USceneComponent * ComponentToChange, float StepDistance)
+{
+	float Length = FVector(CurrentLocation - DesiredLocation).Size();
+	float Alpha = StepDistance / Length;
+
+	if (Alpha < 1.f)
+	{
+		ComponentToChange->SetWorldLocation(FMath::Lerp(CurrentLocation, DesiredLocation, Alpha));
+	}
 }
 
 void ATelekenesisCharacter::MoveForward(float Value)

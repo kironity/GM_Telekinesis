@@ -38,16 +38,16 @@ public:
 	class UPhysicsHandleComponent* PhysicHandle;
 
 	/** Контроль позиции меша подверженного телекинезу */
-	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis")
-	class USceneComponent* TelekenesisPosition;
+	UPROPERTY(EditInstanceOnly, Category = "Telekenesis")
+	class USceneComponent* CurrentTelekinesisPower;
 
 	/** Минимальная дистанция расположения меша подверженного телекинезу */
-	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis|Position")
-	class USceneComponent* MinimumTelekinesisPosition;
+	UPROPERTY(EditInstanceOnly, Category = "Telekenesis|Position")
+	class USceneComponent* MinimumTelekinesisPower;
 
 	/** Максимальная дистанция расположения меша подверженного телекинезу */
-	UPROPERTY(EditDefaultsOnly, Category = "Telekenesis")
-	class USceneComponent* MaximumTelekenesisPosition;
+	UPROPERTY(EditInstanceOnly, Category = "Telekenesis")
+	class USceneComponent* MaximumTelekinesisPower;
 
 protected:
 
@@ -86,9 +86,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound", meta = (EditCondition = "bPlayHoldSoundOnGrabbedComponent"))
 	class USoundBase* HoldTelekinesisSound;
 
+	/** Controll HoldTelekinesisSound Volume if sound specified */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound", meta = (EditCondition = "HoldTelekinesisSound != nullptr"))
+	float HoldTelekinesisVolume;
+
 	/** Base ThowTelekinesisSound */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
 	class USoundBase* ThrowTelekinesisSound;
+
+	/** Controll ThrowTelekinesisSound Volume if sound specified*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound", meta = (EditCondition = "ThrowTelekinesisSound != nullptr"))
+    float ThrowSoundVolume;
 
     /** Set maximum value for telekenesis strength */
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
@@ -98,8 +106,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 200.f))
 	float MinimumFailedDistance;
 
+	/** How Strength we push  grabbed component */
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
 	float ImpulseStrength;
+
+	/** Value to change CurrentTelekinesisPower position between Minimum and Maximum Telekinesis Power */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
+	float StepDistanceValue;
+
+	/** Actor be able to spawn particle effects */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Effects", meta = (DisplayName = "ActorToReleaseEffect"))
+	TSubclassOf<AActor> ThrowEffect;
 
 protected:
 	
@@ -109,6 +126,11 @@ protected:
 	void TelekinesisRelease();
 	/** Input action */
 	void ThrowObject();
+	/** Input action */
+	void WheelUp();
+	/** Input action */
+	void WheelDown();
+
 	/** @param - Filled incoming HitResult 
 	    @return - Is Valid Blocking Hit return true  */
 	bool LineTrace(FHitResult& OutHit);
@@ -131,6 +153,9 @@ protected:
 		@param MaxOffset - Distance between Grabbed Component and Desired Position
 		@warning - For correct work , MaxOffset must be more than 500.f */
 	bool CheckHoldComponents(UPrimitiveComponent* GrabbedComponent, USceneComponent* ComparedComponent, float MaxOffset);
+
+	/** GetLocation  and interpolate her to desired location */
+	void InterpTo(FVector CurrentLocation, FVector DesiredLocation, USceneComponent* ComponentToChange, float StepDistance);
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
