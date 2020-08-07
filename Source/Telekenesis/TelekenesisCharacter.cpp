@@ -108,9 +108,15 @@ void ATelekenesisCharacter::Tick(float DeltaSeconds)
 			// Update Telekinesis mesh position
 			PhysicHandle->SetTargetLocationAndRotation(CurrentTelekinesisPower->GetComponentLocation(), 
 				                                       CurrentTelekinesisPower->GetComponentRotation());
+
 		}
 		else
 		{
+			// Return Outline Color grabbed mesh to default if custom render condition true
+			if (bCanAffectCustomRender)
+			{
+				PhysicHandle->GetGrabbedComponent()->SetRenderCustomDepth(false);
+			}
 			// Stop Grabbed Telekinesis Component 
 			PhysicHandle->ReleaseComponent();
 			bObjectGrabbed = false;
@@ -178,6 +184,12 @@ void ATelekenesisCharacter::TelekinesisUp()
 
 				bObjectGrabbed = true;
 
+				// Change Outline Color grabbed mesh
+				if (bCanAffectCustomRender)
+				{
+					PhysicHandle->GetGrabbedComponent()->SetRenderCustomDepth(true);
+				}
+
 				// Start Play telekinesis sound 
 				OnOffAttachedSound(TelekinesisUpSoundComponent, bObjectGrabbed);
 			}
@@ -208,6 +220,12 @@ void ATelekenesisCharacter::TelekinesisRelease()
 
 	if (PhysicHandle != nullptr && PhysicHandle->GetGrabbedComponent() != nullptr)
 	{
+		// Return Outline Color grabbed mesh to default if custom render condition true
+		if (bCanAffectCustomRender)
+		{
+			PhysicHandle->GetGrabbedComponent()->SetRenderCustomDepth(false);
+		}
+
 		// Stop Grabbed our mesh 
 		PhysicHandle->ReleaseComponent();
 
@@ -237,6 +255,12 @@ void ATelekenesisCharacter::ThrowObject()
 		FRotator SpawnedRotation = GrabbedComponent->GetComponentRotation();
 		FActorSpawnParameters SpawnParameters;
 		GetWorld()->SpawnActor<AActor>(ThrowEffect, SpawnedLocation, SpawnedRotation, SpawnParameters);
+
+		// Return Outline Color grabbed mesh to default if custom render condition true
+		if (bCanAffectCustomRender)
+		{
+			PhysicHandle->GetGrabbedComponent()->SetRenderCustomDepth(false);
+		}
 
 		PhysicHandle->ReleaseComponent();
 	}

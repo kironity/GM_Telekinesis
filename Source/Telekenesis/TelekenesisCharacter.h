@@ -114,6 +114,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
 	float StepDistanceValue;
 
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties")
+	bool bCanAffectCustomRender;
+
 	/** Actor be able to spawn particle effects */
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Effects", meta = (DisplayName = "ActorToReleaseEffect"))
 	TSubclassOf<AActor> ThrowEffect;
