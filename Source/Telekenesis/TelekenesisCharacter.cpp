@@ -96,14 +96,14 @@ void ATelekenesisCharacter::Tick(float DeltaSeconds)
 			// Update Telekinesis mesh position
 			PhysicHandle->SetTargetLocationAndRotation(TelekenesisPosition->GetComponentLocation(), 
 				                                       TelekenesisPosition->GetComponentRotation());
-
+			UE_LOG(LogTemp, Warning, TEXT("True"));
 		}
 		else
 		{
 			// Stop Grabbed Telekinesis Component 
 			PhysicHandle->ReleaseComponent();
 			bObjectGrabbed = false;
-
+			UE_LOG(LogTemp, Warning, TEXT("True"));
 			OnOffAttachedSound(TelekinesisUpSoundComponent, false);
 		}
 	}
@@ -252,16 +252,18 @@ void ATelekenesisCharacter::OnOffAttachedSound(UAudioComponent* ComponenToChange
 }
 
 
-bool ATelekenesisCharacter::CheckHoldComponents(UPrimitiveComponent* ComponentToCheck, USceneComponent* ComparedComponent, float MaxOffset)
+bool ATelekenesisCharacter::CheckHoldComponents(UPrimitiveComponent* GrabbedComponent, USceneComponent* ComparedComponent, float MaxOffset)
 {
 	// If Component Valid Compare Distance 
-	if (ComponentToCheck != nullptr && ComparedComponent != nullptr)
+	if (GrabbedComponent != nullptr && ComparedComponent != nullptr)
 	{
-		float LengthBetweeComponents = FVector(ComponentToCheck->GetComponentLocation() - ComparedComponent->GetComponentLocation()).Size();
+		float LengthBetweenComponents = FVector(GrabbedComponent->GetComponentLocation() - ComparedComponent->GetComponentLocation()).Size();
 
-		LengthBetweeComponents < MaxOffset ? true : false;
+		if (LengthBetweenComponents < MaxOffset)
+		{
+			return true;
+		}
 	}
-	
 	return false;
 }
 

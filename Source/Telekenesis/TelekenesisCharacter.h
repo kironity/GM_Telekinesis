@@ -118,7 +118,7 @@ protected:
 		@param ComparedComponent - CurrentComponent which responsible for Telekinesis
 		@param MaxOffset - Distance between Grabbed Component and Desired Position
 		@warning - For correct work , MaxOffset must be more than 500.f */
-	bool CheckHoldComponents(UPrimitiveComponent* ComponentToCheck, USceneComponent* ComparedComponent, float MaxOffset);
+	bool CheckHoldComponents(UPrimitiveComponent* GrabbedComponent, USceneComponent* ComparedComponent, float MaxOffset);
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
