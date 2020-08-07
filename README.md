@@ -9,6 +9,6 @@ GamePlay mechanics Telekinesis
 # Требуемая версия движка 2.24 и выше.
 
 # Как использовать ?
-1. Версия движка 2.24 и выше .
-2. Для просмотра кода зайти в проект, найти Telekinesis.uproject правой кнопкой мыши Generate Visual Studio project files.
-3. Дальность телекинеза , звуки и эффекты все это настрайвается в Bluprint Версии TelekinesisCharacter или в TelekinesisCharacter.cpp.
+
+1. Для просмотра кода зайти в проект, найти Telekinesis.uproject правой кнопкой мыши Generate Visual Studio project files.
+2. Дальность телекинеза , звуки и эффекты все это настрайвается в Bluprint Версии TelekinesisCharacter или в TelekinesisCharacter.cpp.
