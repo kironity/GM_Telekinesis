@@ -83,8 +83,30 @@ void ATelekenesisCharacter::BeginPlay()
 	// Set Max Distance to Physics Grabbed ability 
 	MaximumTelekenesisPosition->SetRelativeLocation(FVector(MaxLengthTelekinesis, 0.f, 0.f));
 
-	TelekinesisUpSoundComponent = CreateAttachedSound(Mesh1P, HoldTelekinesisSound, true);
+	TelekinesisUpSoundComponent = CreateAttachedSound(GetCapsuleComponent(), HoldTelekinesisSound, true);
 	
+}
+
+void ATelekenesisCharacter::Tick(float DeltaSeconds)
+{
+	if (bObjectGrabbed && PhysicHandle != nullptr)
+	{
+		if (CheckHoldComponents(PhysicHandle->GetGrabbedComponent(), TelekenesisPosition, MinimumFailedDistance))
+		{
+			// Update Telekinesis mesh position
+			PhysicHandle->SetTargetLocationAndRotation(TelekenesisPosition->GetComponentLocation(), 
+				                                       TelekenesisPosition->GetComponentRotation());
+
+		}
+		else
+		{
+			// Stop Grabbed Telekinesis Component 
+			PhysicHandle->ReleaseComponent();
+			bObjectGrabbed = false;
+
+			OnOffAttachedSound(TelekinesisUpSoundComponent, false);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -223,9 +245,25 @@ UAudioComponent* ATelekenesisCharacter::CreateAttachedSound(UPrimitiveComponent*
 
 void ATelekenesisCharacter::OnOffAttachedSound(UAudioComponent* ComponenToChange, bool Condition)
 {
-	ComponenToChange->SetPaused(!Condition);
+	if (ComponenToChange != nullptr)
+	{
+		ComponenToChange->SetPaused(!Condition);
+	}
 }
 
+
+bool ATelekenesisCharacter::CheckHoldComponents(UPrimitiveComponent* ComponentToCheck, USceneComponent* ComparedComponent, float MaxOffset)
+{
+	// If Component Valid Compare Distance 
+	if (ComponentToCheck != nullptr && ComparedComponent != nullptr)
+	{
+		float LengthBetweeComponents = FVector(ComponentToCheck->GetComponentLocation() - ComparedComponent->GetComponentLocation()).Size();
+
+		LengthBetweeComponents < MaxOffset ? true : false;
+	}
+	
+	return false;
+}
 
 void ATelekenesisCharacter::MoveForward(float Value)
 {

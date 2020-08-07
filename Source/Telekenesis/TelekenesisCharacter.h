@@ -53,6 +53,9 @@ protected:
 
 	virtual void BeginPlay();
 
+	// Called every frame 
+	virtual void Tick(float DeltaSeconds);
+
 public:
 
 	/** Gun muzzle's offset from the characters location */
@@ -71,15 +74,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	uint32 bUsingMotionControllers : 1;
 
+	/** Base HoldedTelekinesisSound */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
 	class USoundBase* HoldTelekinesisSound;
 
+	/** Base ThowTelekinesisSound */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
 	class USoundBase* ThrowTelekinesisSound;
 
-    // Set maximum value for telekenesis strength
-	UPROPERTY(EditAnywhere, Category = "Telekinesis", meta = (ClampMin = 0.f))
+    /** Set maximum value for telekenesis strength */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
 	float MaxLengthTelekinesis;
+
+	/** Mimimum value for interrupt Telekinesis  */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 200.f))
+	float MinimumFailedDistance;
 
 protected:
 	
@@ -99,7 +108,18 @@ protected:
 		@return - Component that was Spawned. */ 
 	UAudioComponent* CreateAttachedSound(UPrimitiveComponent* RequiredSpawnComponent, USoundBase* SpawnedSound, bool PauseOnSpawn);
 
-	void OnOffAttachedSound(UAudioComponent* ComponenToChange, bool Condition);
+	/** Pause sound 
+	    @param ComponentToChange - AudioComponent to be change  
+		@param Condition - true = unpause , false = set pause */
+	void OnOffAttachedSound(UAudioComponent* ComponentToChange, bool Condition);
+
+	/**  Interrupt Telekinesis when distance more then MaxOffset
+	    @pararm ComponentToCheck - Our Grabbed Component with PhysicsHandle
+		@param ComparedComponent - CurrentComponent which responsible for Telekinesis
+		@param MaxOffset - Distance between Grabbed Component and Desired Position
+		@warning - For correct work , MaxOffset must be more than 500.f */
+	bool CheckHoldComponents(UPrimitiveComponent* ComponentToCheck, USceneComponent* ComparedComponent, float MaxOffset);
+
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
 
@@ -113,6 +133,7 @@ protected:
 protected:
 
 	class UAudioComponent* TelekinesisUpSoundComponent;
+
 	bool bObjectGrabbed;
 
 public:
