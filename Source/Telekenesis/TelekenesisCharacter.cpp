@@ -83,8 +83,14 @@ void ATelekenesisCharacter::BeginPlay()
 	// Set Max Distance to Physics Grabbed ability 
 	MaximumTelekenesisPosition->SetRelativeLocation(FVector(MaxLengthTelekinesis, 0.f, 0.f));
 
-	TelekinesisUpSoundComponent = CreateAttachedSound(GetCapsuleComponent(), HoldTelekinesisSound, true);
-	
+	if (bPlayHoldSoundOnGrabbedComponent)
+	{
+		TelekinesisUpSoundComponent = CreateAttachedSound(GetCapsuleComponent(), HoldTelekinesisSound, bPauseSoundOnSpawn);
+	}
+	else
+	{
+		TelekinesisUpSoundComponent = nullptr;
+	}
 }
 
 void ATelekenesisCharacter::Tick(float DeltaSeconds)
@@ -96,7 +102,6 @@ void ATelekenesisCharacter::Tick(float DeltaSeconds)
 			// Update Telekinesis mesh position
 			PhysicHandle->SetTargetLocationAndRotation(TelekenesisPosition->GetComponentLocation(), 
 				                                       TelekenesisPosition->GetComponentRotation());
-			UE_LOG(LogTemp, Warning, TEXT("True"));
 		}
 		else
 		{
@@ -120,9 +125,12 @@ void ATelekenesisCharacter::SetupPlayerInputComponent(class UInputComponent* Pla
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
-	// Bind telekinesis event
+	// Bind telekinesis event Left Mouse Button 
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ATelekenesisCharacter::TelekinesisUp);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ATelekenesisCharacter::TelekinesisRelease);
+
+	// Bind Telekinesis event Right Mouse Button 
+	PlayerInputComponent->BindAction("Throw", IE_Pressed, this, &ATelekenesisCharacter::ThrowObject);
 
 	// Bind movement events
 	PlayerInputComponent->BindAxis("MoveForward", this, &ATelekenesisCharacter::MoveForward);
@@ -198,6 +206,25 @@ void ATelekenesisCharacter::TelekinesisRelease()
 	}
 }
 
+void ATelekenesisCharacter::ThrowObject()
+{
+	bObjectGrabbed = false; 
+
+	//If Grabbed Component valid, Add Impulse 
+	if (PhysicHandle->GetGrabbedComponent() != nullptr)
+	{
+		FVector Impulse = FVector(FirstPersonCameraComponent->GetForwardVector() * ImpulseStrength);
+
+		PhysicHandle->GetGrabbedComponent()->AddImpulse(Impulse, FName("None"), true);
+		PhysicHandle->ReleaseComponent();
+
+		OnOffAttachedSound(TelekinesisUpSoundComponent, false);
+
+		// try and play the sound if specified
+		UGameplayStatics::PlaySound2D(this, ThrowTelekinesisSound);
+	}
+}
+
 bool ATelekenesisCharacter::LineTrace(FHitResult& OutHit)
 {
 
@@ -230,7 +257,7 @@ UAudioComponent* ATelekenesisCharacter::CreateAttachedSound(UPrimitiveComponent*
 		UAudioComponent* SpawnSound = UGameplayStatics::SpawnSoundAttached(SpawnedSound, RequiredSpawnComponent);
 
 		// Set Default Sound value on the basis "DefaultCondition"
-		SpawnSound->SetPaused(PauseOnSpawn);
+		SpawnSound->SetPaused(!PauseOnSpawn);
 		return SpawnSound;
 	}
 	else
@@ -249,6 +276,7 @@ void ATelekenesisCharacter::OnOffAttachedSound(UAudioComponent* ComponenToChange
 	{
 		ComponenToChange->SetPaused(!Condition);
 	}
+	return;
 }
 
 

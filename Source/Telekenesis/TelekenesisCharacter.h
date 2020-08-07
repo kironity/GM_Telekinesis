@@ -74,8 +74,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	uint32 bUsingMotionControllers : 1;
 
+	/** On/Off Sound when we holdet grabbed component */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties")
+	bool bPlayHoldSoundOnGrabbedComponent;
+
+	/** Pause When Sound Spawned */
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (DisplayName = "SetSoundPauseWhenSpawn"))
+	bool bPauseSoundOnSpawn;
+
 	/** Base HoldedTelekinesisSound */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Telekinesis|Sound", meta = (EditCondition = "bPlayHoldSoundOnGrabbedComponent"))
 	class USoundBase* HoldTelekinesisSound;
 
 	/** Base ThowTelekinesisSound */
@@ -85,18 +93,22 @@ public:
     /** Set maximum value for telekenesis strength */
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
 	float MaxLengthTelekinesis;
-
+	
 	/** Mimimum value for interrupt Telekinesis  */
 	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 200.f))
 	float MinimumFailedDistance;
 
+	UPROPERTY(EditAnywhere, Category = "Telekinesis|Properties", meta = (ClampMin = 0.f))
+	float ImpulseStrength;
+
 protected:
 	
-	/** Telekinesis start */
+	/** Input action  */
 	void TelekinesisUp();
-
+	/** Input action */
 	void TelekinesisRelease();
-
+	/** Input action */
+	void ThrowObject();
 	/** @param - Filled incoming HitResult 
 	    @return - Is Valid Blocking Hit return true  */
 	bool LineTrace(FHitResult& OutHit);
